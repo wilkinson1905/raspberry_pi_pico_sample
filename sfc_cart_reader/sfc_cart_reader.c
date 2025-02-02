@@ -55,6 +55,12 @@ uint8_t read_registers(uint8_t hw_address, uint8_t address){
     return spi_received_data[2];
 }
 
+void set_address(uint32_t address){
+    write_registers(0x00, OLATA_ADDR, address & 0xFF);
+    write_registers(0x00, OLATB_ADDR, (address >> 8)&0xFF);
+    write_registers(0x01, OLATA_ADDR, (address >> 16)&0xFF);
+}
+
 int main()
 {
     stdio_init_all();
@@ -82,18 +88,20 @@ int main()
     write_registers(0x01, IOCON_ADDR, IOCON_SETTINGS);
     //set GPIO A direction to output
     write_registers(0x00, IODIRA_ADDR, 0x00);
-    write_registers(0x01, IODIRA_ADDR, 0xFF);
+    write_registers(0x01, IODIRA_ADDR, 0x00);
     write_registers(0x00, IODIRB_ADDR, 0x00);
-    write_registers(0x01, IODIRB_ADDR, 0x00);
+    write_registers(0x01, IODIRB_ADDR, 0xFF);
 
-    write_registers(0x00, OLATA_ADDR, 0b10101010);
-    write_registers(0x00, OLATB_ADDR, 0xFF);
-    write_registers(0x01, OLATB_ADDR, 0xFF);
     uint8_t ic1_GPA;
+    uint8_t count=0;
 
     while (true) {
-        sleep_ms(1000);
-        ic1_GPA = read_registers(0x01, GPIOA_ADDR);
-        printf("IC1 GPIOA is %d\n", ic1_GPA);
+        set_address(0xFFC0 + count);
+        ic1_GPA = read_registers(0x01, GPIOB_ADDR);
+        printf("%X : %c\n", 0xFFC0 + count,ic1_GPA);
+        sleep_ms(100);
+        count++;
+        if(count > 21) break;
     }
+    while(true){}
 }
